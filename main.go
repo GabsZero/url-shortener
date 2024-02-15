@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	repositories "github.com/gabszero/url-shortener/pkg/Infrastructure/Repositories"
+)
 
 func main() {
-	fmt.Println("hello")
+	databaseRepo := repositories.Repository{}
+	databaseRepo.StartDabase()
+
 }
