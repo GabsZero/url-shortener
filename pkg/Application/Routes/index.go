@@ -14,7 +14,9 @@ func (r *Router) StartRoutes() {
 	router := mux.NewRouter()
 
 	createShortUrlController := controllers.CreateShortUrlController{}
+	redirectController := controllers.RedirectShortUrlToLongUrlController{}
 	router.HandleFunc("/shorten-url", createShortUrlController.Execute).Methods("Post")
+	router.HandleFunc("/{short_url}", redirectController.Execute).Methods("Get")
 
 	http.ListenAndServe(":8000", router)
 }
