@@ -31,7 +31,6 @@ func (r *Repository) StartDabase() {
 	port := os.Getenv("URL_SHORTENER_DATABASE_PORT")
 	// connectionString := "root:mysqlpw@tcp(127.0.0.1:3306)/url_shortener?charset=utf8mb4&parseTime=True&loc=Local"
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, password, host, port, database)
-	fmt.Println(connectionString)
 
 	databaseConnection, err := gorm.Open(mysql.Open(connectionString), &gorm.Config{})
 
