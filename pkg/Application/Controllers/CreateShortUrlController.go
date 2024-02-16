@@ -16,9 +16,11 @@ func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *
 	w.WriteHeader(http.StatusAccepted)
 	req.ParseForm()
 
+	short_url_length := 7
+
 	long_url := req.PostFormValue("long_url")
 
-	randomString := RandomString(7)
+	randomString := RandomString(short_url_length)
 
 	url := models.Url{
 		Long_url:    long_url,
@@ -34,7 +36,7 @@ func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *
 
 	if result.RowsAffected > 0 {
 		for result.RowsAffected > 0 {
-			randomString = RandomString(7)
+			randomString = RandomString(short_url_length)
 			result = db.First(&models.Url{}, "short_url = ?", randomString)
 			url.Short_url = randomString
 		}
