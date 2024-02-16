@@ -1,0 +1,52 @@
+version: '3.9'
+services:
+  server-1:
+    container_name: url-shortener-1
+    restart: always
+    environment:
+      - URL_SHORTENER_HOST_PORT=8080
+    networks:
+      - database_masterNetwork
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: dev
+    volumes:
+      - .:/opt/app/api
+    # ports:
+    #   - "8080:8080"
+    # expose:
+    #   - 8080
+
+  server-2:
+    container_name: url-shortener-2
+    restart: always
+    environment:
+      - URL_SHORTENER_HOST_PORT=8081
+    networks:
+      - database_masterNetwork
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: dev
+    volumes:
+      - .:/opt/app/api
+    # ports:
+    #   - "8081:8081"
+    # expose:
+    #   - 8081
+
+  nginx:
+    image: nginx
+    container_name: load-balance
+    restart: always
+    volumes:
+    - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+    - "9999:9999"
+    networks:
+      - database_masterNetwork
+
+networks:
+  database_masterNetwork:
+    external: true
