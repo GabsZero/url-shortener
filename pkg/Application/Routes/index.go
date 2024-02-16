@@ -1,7 +1,9 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 
 	controllers "github.com/gabszero/url-shortener/pkg/Application/Controllers"
 	"github.com/gorilla/mux"
@@ -17,6 +19,8 @@ func (r *Router) StartRoutes() {
 	redirectController := controllers.RedirectShortUrlToLongUrlController{}
 	router.HandleFunc("/shorten-url", createShortUrlController.Execute).Methods("Post")
 	router.HandleFunc("/{short_url}", redirectController.Execute).Methods("Get")
+	port := os.Getenv("URL_SHORTENER_HOST_PORT")
 
-	http.ListenAndServe(":8000", router)
+	fmt.Println("Listening request on port " + port)
+	http.ListenAndServe(fmt.Sprintf(":%s", port), router)
 }
