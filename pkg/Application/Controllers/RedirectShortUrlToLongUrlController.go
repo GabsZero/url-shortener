@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"time"
 
 	models "github.com/gabszero/url-shortener/pkg/Infrastructure/Models"
 	repositories "github.com/gabszero/url-shortener/pkg/Infrastructure/Repositories"
@@ -18,17 +19,13 @@ func (controller *RedirectShortUrlToLongUrlController) Execute(w http.ResponseWr
 	db := mainRepo.GetDbInstance()
 
 	url := models.Url{}
-	result := db.First(&url, "short_url = ?", urlParameters["short_url"])
+	result := db.First(&url, "short_url = ? and expire_date > ?", urlParameters["short_url"], time.Now())
 
 	if result.RowsAffected == 0 {
 		w.WriteHeader(http.StatusNotFound)
 
 		w.Write(response(false, "Url not found", nil))
 		return
-	}
-
-	if url.Long_url == "" {
-		panic("long url not defined")
 	}
 
 	url.Is_used = true
