@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"math/rand"
 	"net/http"
 	"time"
@@ -42,7 +43,12 @@ func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *
 		}
 	}
 
-	db.Create(&url)
+	createResult := db.Create(&url)
+
+	if createResult.Error != nil {
+		log.Println(createResult.Error)
+		panic(createResult.Error)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	response := response(true, "Success!", map[string]string{
