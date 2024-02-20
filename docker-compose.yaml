@@ -32,24 +32,6 @@ services:
     volumes:
       - .:/opt/app/api
 
-  server-3:
-    container_name: url-shortener-3
-    restart: always
-    environment:
-      - URL_SHORTENER_HOST_PORT=8082
-    networks:
-      - database_masterNetwork
-    build:
-      dockerfile: Dockerfile
-      context: .
-      target: dev
-    volumes:
-      - .:/opt/app/api
-    # ports:
-    #   - "8081:8081"
-    # expose:
-    #   - 8081
-
   nginx:
     image: nginx
     container_name: load-balance
