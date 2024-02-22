@@ -10,13 +10,13 @@ import (
 	"gorm.io/gorm"
 )
 
-var db *gorm.DB
+var dbShards []*gorm.DB
 
 type Repository struct {
 }
 
-func (r *Repository) GetDbInstance() *gorm.DB {
-	return db
+func (r *Repository) GetDbInstance(shard int) *gorm.DB {
+	return dbShards[shard-1]
 }
 
 func (r *Repository) StartDabase() {
@@ -24,22 +24,32 @@ func (r *Repository) StartDabase() {
 	if err != nil {
 		panic("Error loading .env file")
 	}
-	host := os.Getenv("URL_SHORTENER_DATABASE_HOST")
-	user := os.Getenv("URL_SHORTENER_DATABASE_USER")
-	password := os.Getenv("URL_SHORTENER_DATABASE_PASSWORD")
-	database := os.Getenv("URL_SHORTENER_DATABASE_DATABASE")
-	port := os.Getenv("URL_SHORTENER_DATABASE_PORT")
-	// connectionString := "root:mysqlpw@tcp(127.0.0.1:3306)/url_shortener?charset=utf8mb4&parseTime=True&loc=Local"
-	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, password, host, port, database)
 
-	databaseConnection, err := gorm.Open(mysql.Open(connectionString), &gorm.Config{})
+	count := 0
+	shards := []string{"1", "2"}
 
-	if err != nil {
-		panic(err)
+	for _, shard := range shards {
+		connectionString := GetConnectionString(shard)
+		databaseConnection, err := gorm.Open(mysql.Open(connectionString), &gorm.Config{})
+
+		if err != nil {
+			panic(err)
+		}
+
+		databaseConnection.AutoMigrate(models.Url{})
+		dbShards = append(dbShards, databaseConnection)
+
+		count++
 	}
 
-	db = databaseConnection
+}
 
-	db.AutoMigrate(models.Url{})
-
+func GetConnectionString(shard string) string {
+	host := os.Getenv("URL_SHORTENER_DATABASE_HOST_" + shard)
+	user := os.Getenv("URL_SHORTENER_DATABASE_USER_" + shard)
+	password := os.Getenv("URL_SHORTENER_DATABASE_PASSWORD_" + shard)
+	database := os.Getenv("URL_SHORTENER_DATABASE_DATABASE_" + shard)
+	port := os.Getenv("URL_SHORTENER_DATABASE_PORT_" + shard)
+	// connectionString := "root:mysqlpw@tcp(127.0.0.1:3306)/url_shortener?charset=utf8mb4&parseTime=True&loc=Local"
+	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, password, host, port, database)
 }
