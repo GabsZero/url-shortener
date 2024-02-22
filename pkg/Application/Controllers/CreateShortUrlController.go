@@ -4,6 +4,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	models "github.com/gabszero/url-shortener/pkg/Infrastructure/Models"
@@ -29,8 +30,10 @@ func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *
 		Expire_date: time.Now().AddDate(100, 0, 0),
 	}
 
+	shard := GetShard(string(randomString[0]))
+
 	mainRepo := repositories.Repository{}
-	db := mainRepo.GetDbInstance()
+	db := mainRepo.GetDbInstance(shard)
 
 	// checking if short url already exists
 	result := db.First(&models.Url{}, "short_url = ?", randomString)
@@ -57,6 +60,16 @@ func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *
 
 	w.Write(response)
 
+}
+
+func GetShard(firstLetter string) int {
+
+	const firstShardLetters = "abcdefghijklmnopqrstuvwxyzABCDE"
+	if strings.Contains(firstShardLetters, firstLetter) {
+		return 1
+	}
+
+	return 2
 }
 
 func RandomString(size int) string {
