@@ -16,7 +16,7 @@ func (controller *RedirectShortUrlToLongUrlController) Execute(w http.ResponseWr
 	urlParameters := mux.Vars(req)
 
 	mainRepo := repositories.Repository{}
-	db := mainRepo.GetDbInstance()
+	db := mainRepo.GetDbInstance(1)
 
 	url := models.Url{}
 	result := db.First(&url, "short_url = ? and expire_date > ?", urlParameters["short_url"], time.Now())
