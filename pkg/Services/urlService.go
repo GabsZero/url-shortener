@@ -1,8 +1,13 @@
 package services
 
 import (
+	"errors"
+	"log"
 	"math/rand"
 	"strings"
+
+	models "github.com/gabszero/url-shortener/pkg/Infrastructure/Models"
+	repositories "github.com/gabszero/url-shortener/pkg/Infrastructure/Repositories"
 )
 
 type UrlService struct {
@@ -26,4 +31,28 @@ func (us *UrlService) RandomString(size int) string {
 		b[i] = alphaNumerical[rand.Intn(len(alphaNumerical))]
 	}
 	return string(b)
+}
+
+func (us *UrlService) CreateCustomShortUrl(url models.Url) (bool, error) {
+	shard := us.GetShard(string(url.Short_url[0]))
+
+	mainRepo := repositories.Repository{}
+	db := mainRepo.GetDbInstance(shard)
+
+	// checking if short url already exists
+	result := db.First(&models.Url{}, "short_url = ?", url.Short_url)
+
+	if result.RowsAffected > 0 {
+		return false, errors.New("custom url provided is already in use")
+	}
+
+	createResult := db.Create(&url)
+
+	if createResult.Error != nil {
+
+		log.Println(createResult.Error)
+		return false, errors.New("something went wrong while saving the url")
+	}
+
+	return true, nil
 }

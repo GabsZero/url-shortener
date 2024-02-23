@@ -34,30 +34,15 @@ func (controller *CreateShortUrlController) CustomShortUrl(w http.ResponseWriter
 		Expire_date: time.Now().AddDate(100, 0, 0),
 	}
 
-	shard := controller.urlService.GetShard(string(custom_url[0]))
-
-	mainRepo := repositories.Repository{}
-	db := mainRepo.GetDbInstance(shard)
-
-	// checking if short url already exists
-	result := db.First(&models.Url{}, "short_url = ?", custom_url)
-
-	if result.RowsAffected > 0 {
-		// custom url already exists
-		response := response(false, "Custom url provided is already in use", map[string]string{
+	_, err := controller.urlService.CreateCustomShortUrl(url)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		response := response(false, err.Error(), map[string]string{
 			"custom_url": custom_url,
 		})
-
-		w.WriteHeader(http.StatusBadRequest)
 		w.Write(response)
 		return
-	}
-
-	createResult := db.Create(&url)
-
-	if createResult.Error != nil {
-		log.Println(createResult.Error)
-		panic(createResult.Error)
 	}
 
 	w.WriteHeader(http.StatusCreated)
