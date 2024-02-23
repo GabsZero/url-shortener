@@ -2,16 +2,16 @@ package controllers
 
 import (
 	"log"
-	"math/rand"
 	"net/http"
-	"strings"
 	"time"
 
 	models "github.com/gabszero/url-shortener/pkg/Infrastructure/Models"
 	repositories "github.com/gabszero/url-shortener/pkg/Infrastructure/Repositories"
+	services "github.com/gabszero/url-shortener/pkg/Services"
 )
 
 type CreateShortUrlController struct {
+	urlService services.UrlService
 }
 
 func (controller *CreateShortUrlController) CustomShortUrl(w http.ResponseWriter, req *http.Request) {
@@ -34,7 +34,7 @@ func (controller *CreateShortUrlController) CustomShortUrl(w http.ResponseWriter
 		Expire_date: time.Now().AddDate(100, 0, 0),
 	}
 
-	shard := GetShard(string(custom_url[0]))
+	shard := controller.urlService.GetShard(string(custom_url[0]))
 
 	mainRepo := repositories.Repository{}
 	db := mainRepo.GetDbInstance(shard)
@@ -76,7 +76,7 @@ func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *
 
 	long_url := req.PostFormValue("long_url")
 
-	randomString := RandomString(short_url_length)
+	randomString := controller.urlService.RandomString(short_url_length)
 
 	url := models.Url{
 		Long_url:    long_url,
@@ -84,7 +84,7 @@ func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *
 		Expire_date: time.Now().AddDate(100, 0, 0),
 	}
 
-	shard := GetShard(string(randomString[0]))
+	shard := controller.urlService.GetShard(string(randomString[0]))
 
 	mainRepo := repositories.Repository{}
 	db := mainRepo.GetDbInstance(shard)
@@ -94,7 +94,7 @@ func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *
 
 	if result.RowsAffected > 0 {
 		for result.RowsAffected > 0 {
-			randomString = RandomString(short_url_length)
+			randomString = controller.urlService.RandomString(short_url_length)
 			result = db.First(&models.Url{}, "short_url = ?", randomString)
 			url.Short_url = randomString
 		}
@@ -119,24 +119,4 @@ func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *
 
 	w.Write(response)
 
-}
-
-func GetShard(firstLetter string) int {
-
-	const firstShardLetters = "abcdefghijklmnopqrstuvwxyzABCDE"
-	if strings.Contains(firstShardLetters, firstLetter) {
-		return 1
-	}
-
-	return 2
-}
-
-func RandomString(size int) string {
-	const alphaNumerical = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
-
-	b := make([]byte, size)
-	for i := range b {
-		b[i] = alphaNumerical[rand.Intn(len(alphaNumerical))]
-	}
-	return string(b)
 }
