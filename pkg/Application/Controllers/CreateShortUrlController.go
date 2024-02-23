@@ -35,10 +35,10 @@ func (controller *CreateShortUrlController) CustomShortUrl(w http.ResponseWriter
 	long_url := req.PostFormValue("long_url")
 	custom_url := req.PostFormValue("custom_url")
 
-	url, err := controller.newUrl(long_url, custom_url)
+	url, newUrlError := controller.newUrl(long_url, custom_url)
 
-	if err != nil {
-		response := response(false, err.Error(), map[string]any{
+	if newUrlError != nil {
+		response := response(false, newUrlError.Error(), map[string]any{
 			"custom_url": custom_url,
 			"length":     len(custom_url),
 		})
@@ -47,17 +47,12 @@ func (controller *CreateShortUrlController) CustomShortUrl(w http.ResponseWriter
 		return
 	}
 
-	url := models.Url{
-		Long_url:    long_url,
-		Short_url:   custom_url,
-		Expire_date: time.Now().AddDate(100, 0, 0),
-	}
+	_, customUrlError := controller.urlService.CreateCustomShortUrl(url)
 
-	_, err := controller.urlService.CreateCustomShortUrl(url)
-	if err != nil {
-		log.Println(err)
+	if customUrlError != nil {
+		log.Println(customUrlError)
 		w.WriteHeader(http.StatusBadRequest)
-		response := response(false, err.Error(), map[string]string{
+		response := response(false, customUrlError.Error(), map[string]string{
 			"custom_url": custom_url,
 		})
 		w.Write(response)
