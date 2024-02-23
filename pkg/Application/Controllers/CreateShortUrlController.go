@@ -70,7 +70,6 @@ func (controller *CreateShortUrlController) CustomShortUrl(w http.ResponseWriter
 }
 
 func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *http.Request) {
-	w.WriteHeader(http.StatusAccepted)
 	req.ParseForm()
 
 	short_url_length := 7
@@ -105,9 +104,14 @@ func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *
 
 	if createResult.Error != nil {
 		log.Println(createResult.Error)
-		panic(createResult.Error)
+
+		w.WriteHeader(http.StatusInternalServerError)
+		response := response(false, "Something went wrong while saving the url", nil)
+		w.Write(response)
+		return
 	}
 
+	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	response := response(true, "Success!", map[string]string{
 		"shor_url": url.Short_url,
