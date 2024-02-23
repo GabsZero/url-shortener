@@ -14,6 +14,61 @@ import (
 type CreateShortUrlController struct {
 }
 
+func (controller *CreateShortUrlController) CustomShortUrl(w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+	long_url := req.PostFormValue("long_url")
+	custom_url := req.PostFormValue("custom_url")
+	if len(custom_url) <= 7 {
+		response := response(false, "Custom url need to be 8 characters or higher", map[string]any{
+			"custom_url": custom_url,
+			"lenght":     len(custom_url),
+		})
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(response)
+		return
+	}
+
+	url := models.Url{
+		Long_url:    long_url,
+		Short_url:   custom_url,
+		Expire_date: time.Now().AddDate(100, 0, 0),
+	}
+
+	shard := GetShard(string(custom_url[0]))
+
+	mainRepo := repositories.Repository{}
+	db := mainRepo.GetDbInstance(shard)
+
+	// checking if short url already exists
+	result := db.First(&models.Url{}, "short_url = ?", custom_url)
+
+	if result.RowsAffected > 0 {
+		// custom url already exists
+		response := response(false, "Custom url provided is already in use", map[string]string{
+			"custom_url": custom_url,
+		})
+
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(response)
+		return
+	}
+
+	createResult := db.Create(&url)
+
+	if createResult.Error != nil {
+		log.Println(createResult.Error)
+		panic(createResult.Error)
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	response := response(true, "Success!", map[string]string{
+		"shor_url": url.Short_url,
+	})
+
+	w.Write(response)
+}
+
 func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 	req.ParseForm()

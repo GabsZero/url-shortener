@@ -18,6 +18,7 @@ func (r *Router) StartRoutes() {
 	createShortUrlController := controllers.CreateShortUrlController{}
 	redirectController := controllers.RedirectShortUrlToLongUrlController{}
 	router.HandleFunc("/shorten-url", createShortUrlController.Execute).Methods("Post")
+	router.HandleFunc("/custom-short-url", createShortUrlController.CustomShortUrl).Methods("Post")
 	router.HandleFunc("/{short_url}", redirectController.Execute).Methods("Get")
 	port := os.Getenv("URL_SHORTENER_HOST_PORT")
 
