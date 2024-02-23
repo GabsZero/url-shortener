@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"time"
@@ -14,14 +15,32 @@ type CreateShortUrlController struct {
 	urlService services.UrlService
 }
 
+func (controller *CreateShortUrlController) newUrl(long_url string, short_url string) (models.Url, error) {
+	if len(short_url) <= 7 {
+		return models.Url{}, errors.New("Custom url need to be 8 characters or higher")
+
+	}
+
+	url := models.Url{
+		Long_url:    long_url,
+		Short_url:   short_url,
+		Expire_date: time.Now().AddDate(100, 0, 0), //default value
+	}
+
+	return url, nil
+}
+
 func (controller *CreateShortUrlController) CustomShortUrl(w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 	long_url := req.PostFormValue("long_url")
 	custom_url := req.PostFormValue("custom_url")
-	if len(custom_url) <= 7 {
-		response := response(false, "Custom url need to be 8 characters or higher", map[string]any{
+
+	url, err := controller.newUrl(long_url, custom_url)
+
+	if err != nil {
+		response := response(false, err.Error(), map[string]any{
 			"custom_url": custom_url,
-			"lenght":     len(custom_url),
+			"length":     len(custom_url),
 		})
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(response)
