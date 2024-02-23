@@ -7,7 +7,6 @@ import (
 	"time"
 
 	models "github.com/gabszero/url-shortener/pkg/Infrastructure/Models"
-	repositories "github.com/gabszero/url-shortener/pkg/Infrastructure/Repositories"
 	services "github.com/gabszero/url-shortener/pkg/Services"
 )
 
@@ -15,10 +14,10 @@ type CreateShortUrlController struct {
 	urlService services.UrlService
 }
 
-func (controller *CreateShortUrlController) newUrl(long_url string, short_url string) (models.Url, error) {
-	if len(short_url) <= 7 {
+func (controller *CreateShortUrlController) newUrl(long_url string, short_url string, isCustom bool) (models.Url, error) {
+	short_url_length := 7
+	if isCustom && len(short_url) <= short_url_length {
 		return models.Url{}, errors.New("custom url need to be 8 characters or higher")
-
 	}
 
 	url := models.Url{
@@ -35,7 +34,7 @@ func (controller *CreateShortUrlController) CustomShortUrl(w http.ResponseWriter
 	long_url := req.PostFormValue("long_url")
 	custom_url := req.PostFormValue("custom_url")
 
-	url, newUrlError := controller.newUrl(long_url, custom_url)
+	url, newUrlError := controller.newUrl(long_url, custom_url, true)
 
 	if newUrlError != nil {
 		response := response(false, newUrlError.Error(), map[string]any{
@@ -71,38 +70,22 @@ func (controller *CreateShortUrlController) CustomShortUrl(w http.ResponseWriter
 func (controller *CreateShortUrlController) Execute(w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 
-	short_url_length := 7
-
 	long_url := req.PostFormValue("long_url")
 
-	randomString := controller.urlService.RandomString(short_url_length)
-
-	url := models.Url{
-		Long_url:    long_url,
-		Short_url:   randomString,
-		Expire_date: time.Now().AddDate(100, 0, 0),
+	url, newUrlError := controller.newUrl(long_url, "", false)
+	if newUrlError != nil {
+		response := response(false, newUrlError.Error(), map[string]any{
+			"long_url": long_url,
+		})
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(response)
+		return
 	}
 
-	shard := controller.urlService.GetShard(string(randomString[0]))
+	_, err := controller.urlService.CreateRandomShortUrl(&url, 7) // need to find a better way to do this
 
-	mainRepo := repositories.Repository{}
-	db := mainRepo.GetDbInstance(shard)
-
-	// checking if short url already exists
-	result := db.First(&models.Url{}, "short_url = ?", randomString)
-
-	if result.RowsAffected > 0 {
-		for result.RowsAffected > 0 {
-			randomString = controller.urlService.RandomString(short_url_length)
-			result = db.First(&models.Url{}, "short_url = ?", randomString)
-			url.Short_url = randomString
-		}
-	}
-
-	createResult := db.Create(&url)
-
-	if createResult.Error != nil {
-		log.Println(createResult.Error)
+	if err != nil {
+		log.Println(err)
 
 		w.WriteHeader(http.StatusInternalServerError)
 		response := response(false, "Something went wrong while saving the url", nil)

@@ -33,6 +33,34 @@ func (us *UrlService) RandomString(size int) string {
 	return string(b)
 }
 
+func (us *UrlService) CreateRandomShortUrl(url *models.Url, urlSize int) (bool, error) {
+	randomString := us.RandomString(urlSize)
+	url.Short_url = randomString
+	shard := us.GetShard(string(randomString[0]))
+
+	mainRepo := repositories.Repository{}
+	db := mainRepo.GetDbInstance(shard)
+
+	// checking if short url already exists
+	result := db.First(&models.Url{}, "short_url = ?", randomString)
+
+	if result.RowsAffected > 0 {
+		for result.RowsAffected > 0 {
+			randomString = us.RandomString(urlSize)
+			result = db.First(&models.Url{}, "short_url = ?", randomString)
+			url.Short_url = randomString
+		}
+	}
+
+	createResult := db.Create(&url)
+
+	if createResult.Error != nil {
+		return false, errors.New("something went wrong while saving the url")
+	}
+
+	return true, nil
+}
+
 func (us *UrlService) CreateCustomShortUrl(url models.Url) (bool, error) {
 	shard := us.GetShard(string(url.Short_url[0]))
 
