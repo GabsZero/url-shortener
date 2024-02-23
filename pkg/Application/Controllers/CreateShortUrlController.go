@@ -17,7 +17,7 @@ type CreateShortUrlController struct {
 
 func (controller *CreateShortUrlController) newUrl(long_url string, short_url string) (models.Url, error) {
 	if len(short_url) <= 7 {
-		return models.Url{}, errors.New("Custom url need to be 8 characters or higher")
+		return models.Url{}, errors.New("custom url need to be 8 characters or higher")
 
 	}
 
