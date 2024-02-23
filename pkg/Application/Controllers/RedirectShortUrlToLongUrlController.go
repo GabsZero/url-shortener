@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -25,10 +24,8 @@ func (controller *RedirectShortUrlToLongUrlController) Execute(w http.ResponseWr
 	redisInstance := mainRepo.GetRedisInstance()
 
 	url := models.Url{}
-	long_url, noValueFoundError := redisInstance.Get(req.Context(), "BbpBaQk").Result()
-	fmt.Println(long_url)
-	fmt.Println(urlParameters["short_url"])
-	fmt.Println(noValueFoundError)
+	long_url, noValueFoundError := redisInstance.Get(req.Context(), urlParameters["short_url"]).Result()
+
 	if noValueFoundError != nil {
 		long_url = ""
 	}
