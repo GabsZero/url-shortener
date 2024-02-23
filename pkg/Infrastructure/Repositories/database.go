@@ -6,17 +6,23 @@ import (
 
 	models "github.com/gabszero/url-shortener/pkg/Infrastructure/Models"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 var dbShards []*gorm.DB
+var redisInstance *redis.Client
 
 type Repository struct {
 }
 
 func (r *Repository) GetDbInstance(shard int) *gorm.DB {
 	return dbShards[shard-1]
+}
+
+func (r *Repository) GetRedisInstance() *redis.Client {
+	return redisInstance
 }
 
 func (r *Repository) StartDabase() {
@@ -41,6 +47,15 @@ func (r *Repository) StartDabase() {
 
 		count++
 	}
+
+	//initializing redis
+	ri := redis.NewClient(&redis.Options{
+		Addr:     "cache:6379",
+		Password: "eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81",
+		DB:       0, // use default DB
+	})
+
+	redisInstance = ri
 
 }
 
