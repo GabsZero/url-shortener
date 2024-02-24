@@ -61,5 +61,5 @@ If you have a separate container for database, you should start it now.
 After that, Just run `docker compose up` inside the root folder and you should be good to go
 
 ## ☕ Usage
-You will find the file `endpoints.json` in the root folder, which holds all information you need to make requests
+You will find the file `endpoints.json` in the root folder, which holds all information you need to make requests. It was generated from insomnia, but it's possible to import in postman as well.
 
